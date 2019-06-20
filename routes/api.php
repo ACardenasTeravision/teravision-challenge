@@ -13,6 +13,6 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::get('get-top-urls', 'ShortenedUrlController@getTopUrls');
+Route::get('get-shorten-url/{url}', 'ShortenedUrlController@getShortenUrl')->where('url', '(.*)');
+Route::get('get-link/{code}', 'ShortenedUrlController@getLink');
