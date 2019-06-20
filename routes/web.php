@@ -13,5 +13,5 @@
 
 
 Route::get('/', 'ShortenedUrlController@index');
-Route::post('/', 'ShortenedUrlController@store')->name('shorten.store');
+Route::post('shorten', 'ShortenedUrlController@store')->name('shorten.store');
 Route::get('{code}', 'ShortenedUrlController@shortUrlLink')->name('shorten.url');

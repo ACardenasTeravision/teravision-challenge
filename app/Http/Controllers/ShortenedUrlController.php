@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use GuzzleHttp\Client as guzzle;
 use Goutte\Client;
+use App\Http\Controllers\Controller;
 use App\ShortenedUrl;
 
 class ShortenedUrlController extends Controller
@@ -15,11 +17,17 @@ class ShortenedUrlController extends Controller
      */
     public function index()
     {
-        $request = Request::create('/api/get-top-urls', 'GET');
-        $response = app()->handle($request);
-        $shortened_links = json_decode($response->getContent());
+        $client = new guzzle([
+             'base_uri' => env('APP_URL'),
+             'defaults' => [
+                 'exceptions' => false
+             ]
+        ]);
 
-        return view('shortenedUrls', compact('shortened_links'));
+        $res = $client->request('GET', 'api/get-top-urls');
+        $shortened_links = json_decode($res->getBody());
+
+        return view('shortenedUrls', ["shortened_links"=>$shortened_links]);
     }
 
     /**
@@ -34,14 +42,19 @@ class ShortenedUrlController extends Controller
 
         $url = '/api/get-shorten-url/' . $request->url;
 
-        $request = Request::create($url, 'GET');
-        $response = app()->handle($request);
-        $response = json_decode($response->getContent());
+        $client = new guzzle([
+            'base_uri' => env('APP_URL'),
+            'defaults' => [
+                'exceptions' => false
+            ]
+        ]);
+        $res = $client->request('GET', $url);
+        $response = json_decode($res->getBody());
 
         $urlCodeExists = ShortenedUrl::where('shortened_url', $response->shortened_url)->first();
 
         if(!is_null($urlCodeExists)) {
-            echo "hola";
+            return redirect('/')->with('error', 'The url has already been shortened, try another url!');
         }
         else {
             $newShortenedUrl = new ShortenedUrl;
@@ -50,9 +63,9 @@ class ShortenedUrlController extends Controller
             $newShortenedUrl->shortened_url = $response->shortened_url;
             $newShortenedUrl->title = $this->getTitle($request->url);
             $newShortenedUrl->save();
-        }
 
-        return redirect('/')->with('success', 'URL ' . $response->url . ' has been shorten to' . $response->shortened_url . 'created successfully!');
+            return redirect('/')->with('success', 'URL ' . $response->url . ' has been shorten to ' . $response->shortened_url . ' successfully!');
+        }
     }
 
 
